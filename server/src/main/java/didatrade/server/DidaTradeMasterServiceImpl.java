@@ -74,7 +74,7 @@ public class DidaTradeMasterServiceImpl extends DidaTradeMasterServiceGrpc.DidaT
 		boolean response_value = true;
 
 		int request_id   = request.getReqid();
-		this.server_state.setDebugMode (request.getMode());
+		this.server_state.setDebugMode(request.getMode());
 
 		// for debug purposes
 		System.out.println("Setting debug mode to = " + this.server_state.getDebugMode());
@@ -97,13 +97,6 @@ public class DidaTradeMasterServiceImpl extends DidaTradeMasterServiceGrpc.DidaT
 				break;
 			case 2:
 				System.out.println("[debug] Freezing the server");
-				while (this.server_state.getDebugMode() == 1) {
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
 				break;
 			case 3:
 				System.out.println("[debug] Un-freezing the server");

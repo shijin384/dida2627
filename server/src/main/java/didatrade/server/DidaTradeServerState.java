@@ -148,6 +148,16 @@ public class DidaTradeServerState {
 
     public synchronized void setDebugMode (int mode) {
 	this.debug_mode = mode;
+	this.notifyAll();
     }
 
+    public synchronized void waitIfFrozen() {
+	while (this.debug_mode == 2) {
+	    try {
+		this.wait();
+	    } catch (InterruptedException e) {
+		Thread.currentThread().interrupt();
+	    }
+	}
+    }
 }

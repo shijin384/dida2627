@@ -42,9 +42,15 @@ public class DidaTradeServer {
 	final BindableService service_impl = new DidaTradeMainServiceImpl(server_state);
 	final BindableService master_impl  = new DidaTradeMasterServiceImpl(server_state);
 	final BindableService paxos_impl   = new DidaTradePaxosServiceImpl(server_state);
+
+	FreezeInterceptor freezeInterceptor = new FreezeInterceptor(server_state);
 	
 	// Create a new server to listen on port.
-	Server server = ServerBuilder.forPort(port).addService(service_impl).addService(master_impl).addService(paxos_impl).build();
+	Server server = ServerBuilder.forPort(port)
+			.addService(io.grpc.ServerInterceptors.intercept(service_impl, freezeInterceptor))
+			.addService(master_impl) // We do NOT intercept master, so console requests always work!
+			.addService(io.grpc.ServerInterceptors.intercept(paxos_impl, freezeInterceptor))
+			.build();
 	// Start the server.
 	server.start();
 	// Server threads are running in the background.

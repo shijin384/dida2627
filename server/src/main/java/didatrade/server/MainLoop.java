@@ -49,6 +49,7 @@ public class MainLoop implements Runnable  {
    
  
     public synchronized void processEntry(int entry_number) {
+	this.server_state.waitIfFrozen();
 		
 	PaxosInstance next_entry = this.server_state.paxos_log.testAndSetEntry(entry_number);
 
