@@ -102,6 +102,13 @@ public class DidaTradeMasterServiceImpl extends DidaTradeMasterServiceGrpc.DidaT
 				System.out.println("[debug] Un-freezing the server");
 				this.server_state.setDebugMode(0);
 				break;
+			case 4:
+				System.out.println("[debug] Turning on slow mode");
+				break;
+			case 5:
+				System.out.println("[debug] Turning off slow mode");
+				this.server_state.setDebugMode(0);
+				break;
 			default:
 				System.out.println("DEBUG MODE " + request.getMode() + " NOT IMPLEMENTED YET");
 				break;
