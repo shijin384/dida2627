@@ -1,15 +1,10 @@
 package didatrade.server;
 
-import java.util.*;
+import java.util.List;
 
-import didatrade.core.*;
-import didatrade.configs.*;
-import didatrade.configs.ConfigurationScheduler;
-
-import didatrade.DidaTradeMain;
-import didatrade.DidaTradePaxos;
 import didatrade.DidaTradePaxosServiceGrpc;
-
+import didatrade.configs.ConfigurationScheduler;
+import didatrade.core.TradeManager;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
@@ -138,7 +133,7 @@ public class DidaTradeServerState {
 	}
 	return this.completed_ballot;
     }
-
+	
     public synchronized boolean getFastPaxosMode () {
 	return this.fastpaxos_on;
     }
@@ -153,6 +148,16 @@ public class DidaTradeServerState {
 
     public synchronized void setDebugMode (int mode) {
 	this.debug_mode = mode;
+	this.notifyAll();
     }
 
+    public synchronized void waitIfFrozen() {
+	while (this.debug_mode == 2) {
+	    try {
+		this.wait();
+	    } catch (InterruptedException e) {
+		Thread.currentThread().interrupt();
+	    }
+	}
+    }
 }

@@ -2,7 +2,6 @@ package didatrade.server;
 
 import didatrade.DidaTradeMaster;
 import didatrade.DidaTradeMasterServiceGrpc;
-
 import io.grpc.stub.StreamObserver;
 
 public class DidaTradeMasterServiceImpl extends DidaTradeMasterServiceGrpc.DidaTradeMasterServiceImplBase {
@@ -69,23 +68,58 @@ public class DidaTradeMasterServiceImpl extends DidaTradeMasterServiceGrpc.DidaT
 
     @Override
     public void setdebug(DidaTradeMaster.SetDebugRequest request, StreamObserver<DidaTradeMaster.SetDebugReply> responseObserver) {
-	// for debug purposes
-	System.out.println(request);
+		// for debug purposes
+		System.out.println(request);
 
-	boolean response_value = true;
+		boolean response_value = true;
 
-	int request_id   = request.getReqid();
-	this.server_state.setDebugMode (request.getMode());
+		int request_id   = request.getReqid();
+		this.server_state.setDebugMode(request.getMode());
 
-	// for debug purposes
-	System.out.println("Setting debug mode to = " + this.server_state.getDebugMode());
+		// for debug purposes
+		System.out.println("Setting debug mode to = " + this.server_state.getDebugMode());
 
-	DidaTradeMaster.SetDebugReply.Builder response_builder = DidaTradeMaster.SetDebugReply.newBuilder();
-	response_builder.setReqid(request_id);
-	response_builder.setAck(response_value);
-	
-	DidaTradeMaster.SetDebugReply response = response_builder.build();
-	responseObserver.onNext(response);
-	responseObserver.onCompleted();
+
+		// debugs modes : 
+		// 0 - normal
+		// 1 - crash
+		// 2 - freeze
+		// 3 - un-freeze
+		// 4 - slow-mode-on
+		// 5 - slow-mode-off
+		switch (request.getMode()) {
+			case 0:
+				System.out.println("[debug] Normal mode");
+				break;
+			case 1:
+				System.out.println("[debug] Crashing the server");
+				System.exit(1);
+				break;
+			case 2:
+				System.out.println("[debug] Freezing the server");
+				break;
+			case 3:
+				System.out.println("[debug] Un-freezing the server");
+				this.server_state.setDebugMode(0);
+				break;
+			case 4:
+				System.out.println("[debug] Turning on slow mode");
+				break;
+			case 5:
+				System.out.println("[debug] Turning off slow mode");
+				this.server_state.setDebugMode(0);
+				break;
+			default:
+				System.out.println("DEBUG MODE " + request.getMode() + " NOT IMPLEMENTED YET");
+				break;
+		}
+
+		DidaTradeMaster.SetDebugReply.Builder response_builder = DidaTradeMaster.SetDebugReply.newBuilder();
+		response_builder.setReqid(request_id);
+		response_builder.setAck(response_value);
+		
+		DidaTradeMaster.SetDebugReply response = response_builder.build();
+		responseObserver.onNext(response);
+		responseObserver.onCompleted();
     }
 }
