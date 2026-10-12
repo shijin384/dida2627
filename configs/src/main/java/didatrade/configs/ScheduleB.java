@@ -36,13 +36,13 @@ public class ScheduleB extends Schedule {
     }
     
     public Integer leader (int ballot) {
-	int leader = ballot % 3;
+	int leader = ballot % 5;
 	
 	return new Integer(leader);
     }
 
     public Integer quorum (int ballot) {
-	return new Integer(2);
+	return new Integer(3);
     }
     
     public boolean fastpaxos (int ballot) {
@@ -50,7 +50,7 @@ public class ScheduleB extends Schedule {
     }
 
     public Integer superMajority(int ballot) {
-    return (int) Math.ceil(3.0 * all_acceptors.size() / 4.0);
+    return 4;
     }
 
     public Integer recoveryQuorum(int ballot) {
