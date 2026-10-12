@@ -65,4 +65,12 @@ public class ConfigurationScheduler {
     public boolean fastpaxos(int ballot) {
 	return s.fastpaxos(ballot);
     }
+
+    public Integer superMajority(int ballot) {
+    return s.superMajority(ballot);
+    }
+
+    public Integer recoveryQuorum(int ballot) {
+    return s.recoveryQuorum(ballot);
+    }
 }

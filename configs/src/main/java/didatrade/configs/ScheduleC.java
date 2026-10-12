@@ -68,4 +68,13 @@ public class ScheduleC extends Schedule {
     public boolean fastpaxos(int ballot) {
 	return ((ballot == 0)||(ballot ==2));
     }
+
+	public Integer superMajority(int ballot) {
+    int a = acceptors(ballot).size();
+    return (int) Math.ceil(3.0 * a / 4.0);
+	}
+
+	public Integer recoveryQuorum(int ballot) {
+    return quorum(ballot);
+	}
 }

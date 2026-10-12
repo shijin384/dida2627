@@ -22,4 +22,8 @@ public abstract class Schedule {
     abstract Integer quorum (int ballot);
 
     abstract boolean fastpaxos(int ballot);
+
+    abstract Integer superMajority(int ballot);  // fast quorum (Qf): size needed to decide in one fast round
+
+    abstract Integer recoveryQuorum(int ballot); // quorum collected during Phase-1-style recovery from a stalled/colliding fast round
 }
