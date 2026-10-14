@@ -44,10 +44,38 @@ message LearnReply {
   int32 ballot     = 2;
 }
 
+message FastAcceptRequest {
+  int32 instance        = 1;
+  int32 requestballot   = 2;
+  int32 value           = 3;
+}
+
+message FastAcceptReply {
+  int32 instance        = 1;
+  int32 serverid        = 2;
+  int32 requestballot   = 3;
+  bool  accepted        = 4;
+  int32 maxballot       = 5;
+}
+
+message FastLearnRequest {
+  int32 instance   = 1;
+  int32 ballot     = 2;
+  int32 serverid   = 3;
+  int32 value      = 4;
+}
+
+message FastLearnReply {
+  int32 instance   = 1;
+  int32 ballot     = 2;
+}
+
 service DidaTradePaxosService {
   rpc phaseone (PhaseOneRequest) returns (PhaseOneReply);
   rpc phasetwo (PhaseTwoRequest) returns (PhaseTwoReply);
+  rpc fastaccept  (FastAcceptRequest)  returns (FastAcceptReply);
   rpc learn    (LearnRequest)    returns (LearnReply);
+  rpc fastlearn   (FastLearnRequest)   returns (FastLearnReply);
 }
 
 

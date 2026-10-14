@@ -23,7 +23,7 @@ public class PhaseOneResponseProcessor extends GenericResponseProcessor<DidaTrad
     }
 
     public boolean getAccepted() {
-        return this.accepted;
+        return this.accepted && responses >= quorum;
     }
 
     public int getValue() {
@@ -39,8 +39,6 @@ public class PhaseOneResponseProcessor extends GenericResponseProcessor<DidaTrad
     }
 
     public synchronized boolean onNext(ArrayList<DidaTradePaxos.PhaseOneReply> all_responses, DidaTradePaxos.PhaseOneReply last_response) {
-        this.responses++;
-        
         if (last_response.getAccepted() == false) {
             this.accepted = false;
             if (last_response.getMaxballot() > this.maxballot) {
@@ -48,6 +46,7 @@ public class PhaseOneResponseProcessor extends GenericResponseProcessor<DidaTrad
             }
             return true; // Stop early if rejected
         }
+        this.responses++;
 
         // Keep track of the value with the highest valballot we've seen so far
         if (last_response.getValballot() > this.valballot) {
