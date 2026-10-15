@@ -51,6 +51,7 @@ message BuyReply {
 message BalanceRequest {
   int32 reqid    = 1;
   int32 userid   = 2;
+  int32 dependency = 3;
 }
 
 message BalanceReply {

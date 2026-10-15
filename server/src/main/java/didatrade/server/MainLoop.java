@@ -65,8 +65,8 @@ public class MainLoop implements Runnable {
 
         if (this.established_ballot != ballot) {
             int probe = probeInstanceFor();
-			boolean fast = this.server_state.scheduler.fastpaxos(ballot);
-    		this.server_state.setFastPaxosMode(fast);
+            boolean fast = this.server_state.scheduler.fastpaxos(ballot);
+            this.server_state.setFastPaxosMode(fast);
             int result = strategyFor().establishLeadership(ballot, probe);
             if (result < 0)
                 return false; // lost the ballot race; retry once current_ballot updates
@@ -81,7 +81,7 @@ public class MainLoop implements Runnable {
         if (pending_check != null && !pending_check.decided && pending_check.fast_collision) {
             int recoveredValue = pending_check.leadingVoteAndCount()[0];
             System.out.println("[MULTIPAXOS] Recovering collided instance " + this.next_instance_to_apply
-                + " via classic round, value=" + recoveredValue);
+                    + " via classic round, value=" + recoveredValue);
             boolean ok = classic.propose(this.next_instance_to_apply, ballot, recoveredValue);
             if (!ok) {
                 this.established_ballot = -1;
@@ -134,7 +134,7 @@ public class MainLoop implements Runnable {
 
             applyCommand(request_record);
             System.out.println("Applied instance " + this.next_instance_to_apply
-                + " command id = " + entry.command_id);
+                    + " command id = " + entry.command_id);
             this.next_instance_to_apply++;
             did_something = true;
         }
@@ -147,38 +147,41 @@ public class MainLoop implements Runnable {
         int balance = 0;
 
         switch (command.getAction()) {
-        case DidaTradeAction.POPULATE:
-            result = this.server_state.trade_manager.populate(command.getQuantity());
-            break;
-        case DidaTradeAction.ADDUSER:
-            result = this.server_state.trade_manager.add_user(command.getUserId(), command.getQuantity(), command.getStock());
-            break;
-        case DidaTradeAction.SELL:
-            result = this.server_state.trade_manager.sell(command.getUserId(), command.getQuantity());
-            break;
-        case DidaTradeAction.BUY:
-            result = this.server_state.trade_manager.acquire(command.getUserId(), command.getQuantity());
-            break;
-        case DidaTradeAction.BALANCE:
-            balance = this.server_state.trade_manager.balance(command.getUserId());
-            command.setQuantity(balance);
-            result = (balance != -1);
-            break;
-        case DidaTradeAction.DUMP:
-            this.server_state.trade_manager.dump();
-            result = true;
-            break;
-        default:
-            result = false;
-            System.err.println("*** Unknown command ****");
-            break;
+            case DidaTradeAction.POPULATE:
+                result = this.server_state.trade_manager.populate(command.getQuantity());
+                break;
+            case DidaTradeAction.ADDUSER:
+                result = this.server_state.trade_manager.add_user(command.getUserId(), command.getQuantity(),
+                        command.getStock());
+                break;
+            case DidaTradeAction.SELL:
+                result = this.server_state.trade_manager.sell(command.getUserId(), command.getQuantity());
+                break;
+            case DidaTradeAction.BUY:
+                result = this.server_state.trade_manager.acquire(command.getUserId(), command.getQuantity());
+                break;
+            case DidaTradeAction.BALANCE:
+                balance = this.server_state.trade_manager.balance(command.getUserId());
+                command.setQuantity(balance);
+                result = (balance != -1);
+                break;
+            case DidaTradeAction.DUMP:
+                this.server_state.trade_manager.dump();
+                result = true;
+                break;
+            default:
+                result = false;
+                System.err.println("*** Unknown command ****");
+                break;
         }
 
         request_record.setResponse(result);
         this.server_state.req_history.moveToProcessed(request_record.getId());
+
+        this.server_state.updateMaxAppliedReqid(request_record.getId());
     }
 
     private ProposalStrategy strategyFor() {
-    	return this.server_state.getFastPaxosMode() ? this.fast : this.classic;
-	}
+        return this.server_state.getFastPaxosMode() ? this.fast : this.classic;
+    }
 }
