@@ -70,12 +70,28 @@ message FastLearnReply {
   int32 ballot     = 2;
 }
 
+message StateTransferRequest {
+  int32 from_instance = 1;
+}
+
+message DecidedInstance {
+  int32 instance   = 1;
+  int32 command_id = 2;
+  int32 ballot     = 3;
+}
+
+message StateTransferReply {
+  bool  success    = 1;
+  repeated DecidedInstance instances = 2;
+}
+
 service DidaTradePaxosService {
   rpc phaseone (PhaseOneRequest) returns (PhaseOneReply);
   rpc phasetwo (PhaseTwoRequest) returns (PhaseTwoReply);
   rpc fastaccept  (FastAcceptRequest)  returns (FastAcceptReply);
   rpc learn    (LearnRequest)    returns (LearnReply);
   rpc fastlearn   (FastLearnRequest)   returns (FastLearnReply);
+  rpc statetransfer (StateTransferRequest) returns (StateTransferReply);
 }
 
 

@@ -3,6 +3,8 @@ package didatrade.server;
 import java.util.*;
 import didatrade.DidaTradePaxos;
 import didatrade.util.*;
+import didatrade.DidaTradePaxosServiceGrpc;
+import io.grpc.ManagedChannel;
 
 public class ClassicPaxosStrategy implements ProposalStrategy {
     private final DidaTradeServerState state;
@@ -13,22 +15,23 @@ public class ClassicPaxosStrategy implements ProposalStrategy {
 
     @Override
     public int establishLeadership(int ballot, int probeInstance) {
+        catchUpState(ballot, probeInstance);
+
         List<Integer> acceptors = state.scheduler.acceptors(ballot);
         int n_acceptors = acceptors.size();
         int low_ballot = Math.max(state.getCompletedBallot(), 0);
 
         System.out.println("[MULTIPAXOS] Establishing leadership (classic) for ballot " + ballot
-            + " probing instance " + probeInstance);
+                + " probing instance " + probeInstance);
 
         DidaTradePaxos.PhaseOneRequest.Builder req = DidaTradePaxos.PhaseOneRequest.newBuilder();
         req.setInstance(probeInstance);
         req.setRequestballot(ballot);
 
-        PhaseOneResponseProcessor processor =
-            new PhaseOneResponseProcessor(state.scheduler, low_ballot, ballot);
+        PhaseOneResponseProcessor processor = new PhaseOneResponseProcessor(state.scheduler, low_ballot, ballot);
         ArrayList<DidaTradePaxos.PhaseOneReply> responses = new ArrayList<>();
-        GenericResponseCollector<DidaTradePaxos.PhaseOneReply> collector =
-            new GenericResponseCollector<>(responses, n_acceptors, processor);
+        GenericResponseCollector<DidaTradePaxos.PhaseOneReply> collector = new GenericResponseCollector<>(responses,
+                n_acceptors, processor);
 
         for (int a : acceptors) {
             CollectorStreamObserver<DidaTradePaxos.PhaseOneReply> obs = new CollectorStreamObserver<>(collector);
@@ -37,11 +40,12 @@ public class ClassicPaxosStrategy implements ProposalStrategy {
         collector.waitUntilDone();
 
         System.out.println("Leadership Phase 1 for ballot " + ballot + " probing instance "
-            + probeInstance + " -> accepted=" + processor.getAccepted());
+                + probeInstance + " -> accepted=" + processor.getAccepted());
 
         if (!processor.getAccepted()) {
             int maxballot = processor.getMaxballot();
-            if (maxballot > state.getCurrentBallot()) state.setCurrentBallot(maxballot);
+            if (maxballot > state.getCurrentBallot())
+                state.setCurrentBallot(maxballot);
             return -1;
         }
 
@@ -64,11 +68,10 @@ public class ClassicPaxosStrategy implements ProposalStrategy {
         req.setRequestballot(ballot);
         req.setValue(value);
 
-        PhaseTwoResponseProcessor processor =
-            new PhaseTwoResponseProcessor(state.scheduler.quorum(ballot));
+        PhaseTwoResponseProcessor processor = new PhaseTwoResponseProcessor(state.scheduler.quorum(ballot));
         ArrayList<DidaTradePaxos.PhaseTwoReply> responses = new ArrayList<>();
-        GenericResponseCollector<DidaTradePaxos.PhaseTwoReply> collector =
-            new GenericResponseCollector<>(responses, n_acceptors, processor);
+        GenericResponseCollector<DidaTradePaxos.PhaseTwoReply> collector = new GenericResponseCollector<>(responses,
+                n_acceptors, processor);
 
         for (int a : acceptors) {
             CollectorStreamObserver<DidaTradePaxos.PhaseTwoReply> obs = new CollectorStreamObserver<>(collector);
@@ -81,5 +84,41 @@ public class ClassicPaxosStrategy implements ProposalStrategy {
             return false;
         }
         return true;
+    }
+
+    private void catchUpState(int ballot, int probeInstance) {
+        List<Integer> participants = state.scheduler.allparticipantsinballot(ballot);
+        int fromInstance = 0;
+
+        DidaTradePaxos.StateTransferRequest req = DidaTradePaxos.StateTransferRequest.newBuilder()
+                .setFromInstance(fromInstance)
+                .build();
+
+        for (int p : participants) {
+            if (p == state.my_id)
+                continue;
+            try {
+                ManagedChannel channel = state.channels[p];
+                DidaTradePaxosServiceGrpc.DidaTradePaxosServiceBlockingStub blockingStub = DidaTradePaxosServiceGrpc
+                        .newBlockingStub(channel);
+
+                DidaTradePaxos.StateTransferReply reply = blockingStub.statetransfer(req);
+                if (reply != null && reply.getSuccess()) {
+                    synchronized (state.paxos_log) {
+                        for (DidaTradePaxos.DecidedInstance inst : reply.getInstancesList()) {
+                            PaxosInstance entry = state.paxos_log.testAndSetEntry(inst.getInstance());
+                            if (!entry.decided) {
+                                entry.command_id = inst.getCommandId();
+                                entry.accept_ballot = inst.getBallot();
+                                entry.decided = true;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+            }
+        }
+
+        state.main_loop.wakeup();
     }
 }
